@@ -1,0 +1,26 @@
+import * as cdk from 'aws-cdk-lib';
+import * as rds from 'aws-cdk-lib/aws-rds';
+
+const app = new cdk.App();
+
+const stack = new cdk.Stack(app, 'RDSStack', {
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION
+    }
+});
+
+new rds.DatabaseInstance(stack, 'PostgreSQLInstance', {
+    engine: rds.DatabaseInstanceEngine.postgres({
+        version: rds.PostgresEngineVersion.VER_13_4
+    }),
+    instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.SMALL),
+    vpc: ec2.Vpc.fromLookup(stack, 'Vpc', { vpcId: 'vpc-123456' }),
+    vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE },
+    allocatedStorage: 20,
+    deletionProtection: false,
+    backupRetention: Duration.days(7),
+    autoMinorVersionUpgrade: true,
+    parameterGroup: rds.ParameterGroup.fromParameterGroupName(stack, 'ParameterGroup', 'default.postgres13'),
+    securityGroups: [ec2.SecurityGroup.fromSecurityGroupId(stack, 'SecurityGroup', 'sg-123456')]
+});
